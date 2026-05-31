@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Orange</title>
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#FF6600">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<meta name="apple-mobile-web-app-title" content="Orange Studio">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --or:#FF6600;--or2:#FF8C00;--or3:#FFB347;
+  --canvas:#EBEBEB;--dot:#D0D0D0;
+  --sb:#1E1E26;--sb2:#272730;--sb3:#32323E;
+  --card:#FFFFFF;--cardf:#F7F7F9;
+  --tx:#1A1A2E;--mt:#7A7A90;--lt:#B0B0C0;
+  --ok:#16A34A;--okl:#DCFCE7;
+  --err:#DC2626;--errl:#FEE2E2;
+  --bl:#2563EB;--bll:#DBEAFE;
+  --pu:#7C3AED;--pul:#EDE9FE;
+  --teal:#0D9488;--teall:#CCFBF1;
+  --bdr:#E5E5EA;--shadow:0 4px 24px rgba(0,0,0,.12);
+  --f:'Sora',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:var(--f);background:var(--canvas);}
+
+/* ══ TOPBAR ══ */
+.topbar{
+  height:50px;background:var(--or);
+  display:flex;align-items:center;padding:0 14px;gap:12px;
+  position:fixed;top:0;left:0;right:0;z-index:400;
+  box-shadow:0 2px 12px rgba(255,102,0,.4);
+}
+.ham-btn{
+  width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.2);
+  border:none;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:5px;flex-shrink:0;
+}
+.ham-line{width:18px;height:2px;background:#fff;border-radius:2px;transition:all .25s;}
+.ham-btn.open .ham-line:nth-child(1){transform:rotate(45deg) translate(5px,5px);}
+.ham-btn.open .ham-line:nth-child(2){opacity:0;}
+.ham-btn.open .ham-line:nth-child(3){transform:rotate(-45deg) translate(5px,-5px);}
+.top-logo{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.4px;flex:1;}
+.top-logo em{font-weight:300;font-style:normal;opacity:.85;}
+.top-run{
+  padding:7px 14px;border-radius:8px;background:rgba(255,255,255,.25);
+  border:1.5px solid rgba(255,255,255,.4);color:#fff;font-size:12px;
+  font-weight:700;cursor:pointer;font-family:var(--f);
+}
+.top-run:active{background:rgba(255,255,255,.4);}
+
+/* ══ HAMBURGER DRAWER ══ */
+.drawer-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.drawer-overlay.open{opacity:1;pointer-events:all;}
+.drawer{
+  position:absolute;left:0;top:0;bottom:0;width:260px;
+  background:var(--sb);display:flex;flex-direction:column;
+  transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;padding-bottom:24px;
+}
+.drawer-overlay.open .drawer{transform:translateX(0);}
+.drawer::-webkit-scrollbar{width:3px;}
+.drawer::-webkit-scrollbar-thumb{background:#444;}
+
+.drawer-top{
+  height:50px;background:var(--or);display:flex;align-items:center;
+  padding:0 14px;gap:10px;flex-shrink:0;
+}
+.drawer-title{font-size:14px;font-weight:700;color:#fff;}
+
+.drawer-search{padding:10px 12px;background:var(--sb2);flex-shrink:0;}
+.drawer-search input{
+  width:100%;padding:9px 12px;background:var(--sb3);border:1px solid #3A3A4A;
+  border-radius:8px;color:#ddd;font-size:12px;font-family:var(--f);
+}
+.drawer-search input::placeholder{color:#666;}
+.drawer-search input:focus{outline:none;border-color:var(--or);}
+
+.cat-hd{
+  display:flex;align-items:center;gap:8px;padding:10px 14px 8px;
+  cursor:pointer;
+}
+.cat-hd:hover{background:var(--sb2);}
+.cat-pip{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cat-nm{font-size:11px;font-weight:700;color:#aaa;letter-spacing:.8px;text-transform:uppercase;flex:1;}
+.cat-chev{font-size:10px;color:#555;transition:transform .2s;}
+.cat-chev.open{transform:rotate(90deg);}
+.cat-list{padding:0 0 4px;}
+
+.wi{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px 9px 30px;cursor:pointer;transition:background .15s;
+}
+.wi:active{background:var(--sb3);}
+.wi-ico{
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+}
+.wi-txt{flex:1;}
+.wi-name{font-size:12px;color:#ccc;font-weight:600;}
+.wi-desc{font-size:10px;color:#666;margin-top:1px;}
+.wi-add{
+  width:24px;height:24px;border-radius:6px;background:var(--or);
+  color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;flex-shrink:0;
+}
+
+/* ══ CANVAS ══ */
+.canvas-area{
+  position:fixed;top:50px;left:0;right:0;bottom:28px;
+  overflow:auto;-webkit-overflow-scrolling:touch;
+  background:var(--canvas);
+  background-image:radial-gradient(circle,var(--dot) 1.2px,transparent 1.2px);
+  background-size:22px 22px;
+}
+svg#csvg{
+  position:absolute;top:0;left:0;width:2800px;height:2200px;
+  pointer-events:none;z-index:1;
+}
+.canvas-inner{position:absolute;top:0;left:0;width:2800px;height:2200px;}
+
+.hint{
+  position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;pointer-events:none;
+}
+.hint-big{font-size:52px;opacity:.12;margin-bottom:10px;}
+.hint-txt{font-size:13px;color:#aaa;line-height:1.9;font-weight:500;}
+
+/* ══ NODE — Orange circle style ══ */
+.node{
+  position:absolute;display:flex;flex-direction:column;
+  align-items:center;width:88px;cursor:pointer;
+  z-index:10;touch-action:none;
+}
+.node-ring{
+  width:68px;height:68px;border-radius:50%;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
+  border:3px solid rgba(255,255,255,.9);
+  transition:box-shadow .2s,transform .15s;
+}
+.node:active .node-ring{transform:scale(.93);}
+.node.sel .node-ring{box-shadow:0 0 0 4px var(--or),0 6px 20px rgba(255,102,0,.35);}
+.node.linked .node-ring{box-shadow:0 0 0 3px var(--ok),0 4px 14px rgba(22,163,74,.25);}
+.node.err .node-ring{box-shadow:0 0 0 3px var(--err);}
+.node-icon{font-size:27px;line-height:1;}
+.node-dot{
+  position:absolute;bottom:1px;right:1px;width:14px;height:14px;
+  border-radius:50%;background:#ccc;border:2.5px solid #fff;transition:background .3s;
+}
+.node.ready .node-dot{background:var(--ok);}
+.node.busy .node-dot{background:var(--or2);animation:pulse .7s infinite;}
+.node.err .node-dot{background:var(--err);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;};}
+.node-lbl{font-size:10px;font-weight:700;color:#333;margin-top:6px;text-align:center;line-height:1.3;}
+.node-sub{font-size:9px;color:#999;margin-top:1px;text-align:center;}
+.node-del{
+  position:absolute;top:-5px;right:-5px;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--err);color:#fff;font-size:11px;font-weight:700;
+  border:2px solid #fff;display:none;align-items:center;justify-content:center;
+  cursor:pointer;z-index:20;
+}
+.node:hover .node-del{display:flex;}
+
+/* ══ CONNECTION LINES ══ */
+.cpath{stroke:#3399FF;stroke-width:2.5;fill:none;stroke-linecap:round;opacity:.8;}
+.cpath.live{stroke:var(--ok);}
+.carr{fill:#3399FF;opacity:.8;}
+.carr.live{fill:var(--ok);}
+
+/* ══ ACTION SHEET (bottom sheet when node tapped) ══ */
+.sheet-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.sheet-overlay.open{opacity:1;pointer-events:all;}
+.sheet{
+  position:absolute;bottom:0;left:0;right:0;
+  background:#fff;border-radius:20px 20px 0 0;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.2,.64,1);
+  max-height:82vh;overflow-y:auto;padding-bottom:24px;
+}
+.sheet-overlay.open .sheet{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:12px auto 0;}
+.sheet-hd{display:flex;align-items:center;gap:12px;padding:14px 16px 12px;border-bottom:1px solid var(--bdr);}
+.sheet-hd-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.sheet-hd-title{font-size:15px;font-weight:700;color:var(--tx);}
+.sheet-hd-sub{font-size:11px;color:var(--mt);margin-top:2px;}
+.sheet-close{margin-left:auto;width:28px;height:28px;border-radius:8px;background:var(--cardf);border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#888;}
+.sheet-body{padding:14px 16px;}
+
+/* ── action buttons inside sheet ── */
+.action-list{display:flex;flex-direction:column;gap:8px;}
+.action-btn{
+  display:flex;align-items:center;gap:12px;padding:14px;
+  background:var(--cardf);border:1.5px solid var(--bdr);border-radius:12px;
+  cursor:pointer;transition:all .15s;text-align:left;width:100%;font-family:var(--f);
+}
+.action-btn:active{background:#fff0e6;border-color:var(--or);}
+.action-btn-ico{font-size:20px;flex-shrink:0;}
+.action-btn-txt{}
+.action-btn-name{font-size:13px;font-weight:700;color:var(--tx);}
+.action-btn-desc{font-size:11px;color:var(--mt);margin-top:2px;}
+.action-btn.primary{background:var(--or);border-color:var(--or);}
+.action-btn.primary .action-btn-name{color:#fff;}
+.action-btn.primary .action-btn-desc{color:rgba(255,255,255,.8);}
+.action-btn.danger{background:var(--errl);border-color:var(--err);}
+.action-btn.danger .action-btn-name{color:var(--err);}
+
+/* ── file upload inside sheet ── */
+.upload-zone{
+  display:block;width:100%;
+  border:2.5px dashed var(--or);border-radius:14px;
+  padding:24px 16px;text-align:center;cursor:pointer;
+  background:#FFF8F5;position:relative;
+  transition:background .2s;
+}
+.upload-zone:active{background:#FFE8D6;}
+.upload-zone input{
+  position:absolute;inset:0;opacity:0;
+  width:100%;height:100%;cursor:pointer;
+}
+.uz-icon{font-size:36px;margin-bottom:8px;}
+.uz-title{font-size:14px;font-weight:700;color:var(--or);}
+.uz-sub{font-size:11px;color:var(--mt);margin-top:4px;}
+.uz-btn{
+  margin-top:14px;display:inline-block;
+  background:var(--or);color:#fff;padding:10px 28px;
+  border-radius:8px;font-size:13px;font-weight:700;
+}
+
+/* ── connect picker inside sheet ── */
+.connect-section{margin-bottom:16px;}
+.connect-label{font-size:11px;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;display:block;}
+.connect-node-list{display:flex;flex-direction:column;gap:6px;}
+.connect-node-btn{
+  display:flex;align-items:center;gap:10px;padding:12px;
+  background:var(--cardf);border:1.5px solid var(--bdr);border-radius:10px;
+  cursor:pointer;transition:all .15s;width:100%;font-family:var(--f);text-align:left;
+}
+.connect-node-btn:active{background:var(--bll);border-color:var(--bl);}
+.connect-node-btn.connected{background:var(--okl);border-color:var(--ok);}
+.connect-node-btn .cn-ico{font-size:20px;flex-shrink:0;}
+.connect-node-btn .cn-name{font-size:12px;font-weight:700;color:var(--tx);}
+.connect-node-btn .cn-status{font-size:10px;color:var(--mt);margin-top:1px;}
+.connect-node-btn .cn-badge{margin-left:auto;font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--bll);color:var(--bl);white-space:nowrap;}
+.connect-node-btn.connected .cn-badge{background:var(--okl);color:var(--ok);}
+
+/* ── form controls inside sheet ── */
+.sf{margin-bottom:12px;}
+.sl{font-size:11px;font-weight:700;color:var(--mt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block;}
+.ss,.si{
+  width:100%;padding:11px 13px;border:1.5px solid var(--bdr);border-radius:10px;
+  font-size:13px;font-family:var(--f);background:var(--cardf);color:var(--tx);
+  transition:border-color .2s;
+}
+.ss:focus,.si:focus{outline:none;border-color:var(--or);}
+.ss option{background:#fff;}
+.sbtn{
+  width:100%;padding:13px;border:none;border-radius:10px;background:var(--or);
+  color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--f);
+  display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;
+}
+.sbtn:active{opacity:.8;}
+.sbtn.green{background:var(--ok);}
+.sbtn.blue{background:var(--bl);}
+.sbtn.ghost{background:var(--cardf);color:var(--tx);border:1.5px solid var(--bdr);}
+
+/* ── result display ── */
+.ptbl{border:1px solid var(--bdr);border-radius:8px;overflow:auto;max-height:200px;margin-top:8px;}
+table{width:100%;border-collapse:collapse;font-size:10px;font-family:var(--fm);}
+th{background:#FFF3EC;color:var(--or);padding:7px 9px;text-align:left;border-bottom:1px solid var(--bdr);white-space:nowrap;font-weight:700;}
+td{padding:5px 9px;border-bottom:1px solid #F5F5F5;white-space:nowrap;}
+tr:hover td{background:#FFFAF5;}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.metric{background:var(--cardf);border:1.5px solid var(--bdr);border-radius:10px;padding:12px;text-align:center;}
+.metric.wide{grid-column:span 2;}
+.metric.good{border-color:var(--ok);background:var(--okl);}
+.metric.warn{border-color:var(--or);}
+.mv{font-size:20px;font-weight:800;color:var(--or);font-family:var(--fm);}
+.metric.good .mv{color:var(--ok);}
+.ml{font-size:9px;color:var(--mt);text-transform:uppercase;letter-spacing:.6px;margin-top:3px;font-weight:700;}
+.pchart{height:175px;margin-top:10px;}
+.info-pill{
+  background:#FFF8F0;border:1px solid #FFD4B0;border-radius:8px;
+  padding:10px 12px;font-size:11px;color:#884400;line-height:1.6;margin-bottom:10px;
+}
+
+/* ══ STATUS BAR ══ */
+.statusbar{
+  position:fixed;bottom:0;left:0;right:0;height:28px;
+  background:var(--sb);display:flex;align-items:center;padding:0 14px;gap:16px;z-index:300;
+}
+.sb-i{font-size:10px;color:#666;font-family:var(--fm);}
+.sb-i b{color:#aaa;}
+
+/* ══ TOAST ══ */
+.toast{
+  position:fixed;bottom:38px;left:50%;transform:translateX(-50%) translateY(8px);
+  background:var(--sb);color:#eee;border-radius:10px;
+  padding:9px 18px;font-size:12px;font-weight:600;
+  opacity:0;transition:opacity .22s,transform .22s;z-index:999;
+  pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* progress */
+.pbar{height:5px;background:var(--bdr);border-radius:3px;overflow:hidden;margin:8px 0;}
+.pfill{height:100%;background:linear-gradient(90deg,var(--or),var(--or2));border-radius:3px;transition:width .5s;}
+.split-vis{display:flex;border-radius:8px;overflow:hidden;height:28px;margin:8px 0;}
+.split-tr{background:var(--ok);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;transition:width .3s;}
+.split-te{background:var(--bl);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;transition:width .3s;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <button class="ham-btn" id="hamBtn" onclick="toggleDrawer()">
+    <div class="ham-line"></div>
+    <div class="ham-line"></div>
+    <div class="ham-line"></div>
+  </button>
+  <div class="top-logo">Orange <em>Studio</em></div>
+  <button class="top-run" onclick="runAll()">▶ Run</button>
+</div>
+
+<!-- HAMBURGER DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawerOnOverlay(event)">
+  <div class="drawer" id="drawer">
+    <div class="drawer-top">
+      <div class="drawer-title">🍊 Widgets</div>
+    </div>
+    <div class="drawer-search">
+      <input type="text" placeholder="🔍 Search widgets…" oninput="filterWi(this.value)"/>
+    </div>
+
+    <!-- DATA -->
+    <div class="cat-hd" onclick="toggleCat('data')">
+      <div class="cat-pip" style="background:#F5A623;"></div>
+      <div class="cat-nm">Data</div>
+      <div class="cat-chev open" id="chev-data">›</div>
+    </div>
+    <div id="cat-data">
+      <div class="wi" onclick="addNodeAndClose('file')" data-s="file csv excel import">
+        <div class="wi-ico" style="background:#FFF3E0">📁</div>
+        <div class="wi-txt"><div class="wi-name">File</div><div class="wi-desc">Import CSV or Excel</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('datatable')" data-s="table view data">
+        <div class="wi-ico" style="background:#E8F5E9">📋</div>
+        <div class="wi-txt"><div class="wi-name">Data Table</div><div class="wi-desc">Preview dataset</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('sampler')" data-s="split sample train test">
+        <div class="wi-ico" style="background:#E3F2FD">✂️</div>
+        <div class="wi-txt"><div class="wi-name">Data Sampler</div><div class="wi-desc">Train / Test split</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('featurestat')" data-s="statistics feature stat">
+        <div class="wi-ico" style="background:#FFF3E0">📊</div>
+        <div class="wi-txt"><div class="wi-name">Feature Statistics</div><div class="wi-desc">Column overview</div></div>
+        <div class="wi-add">+</div>
+      </div>
+    </div>
+
+    <!-- VISUALIZE -->
+    <div class="cat-hd" onclick="toggleCat('viz')">
+      <div class="cat-pip" style="background:#9B59B6;"></div>
+      <div class="cat-nm">Visualize</div>
+      <div class="cat-chev open" id="chev-viz">›</div>
+    </div>
+    <div id="cat-viz">
+      <div class="wi" onclick="addNodeAndClose('scatter')" data-s="scatter plot visualize">
+        <div class="wi-ico" style="background:#F3E5F5">🔴</div>
+        <div class="wi-txt"><div class="wi-name">Scatter Plot</div><div class="wi-desc">X vs Y comparison</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('distributions')" data-s="histogram distribution frequency">
+        <div class="wi-ico" style="background:#F3E5F5">📈</div>
+        <div class="wi-txt"><div class="wi-name">Distributions</div><div class="wi-desc">Column histogram</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('boxplot')" data-s="box plot whisker">
+        <div class="wi-ico" style="background:#F3E5F5">📦</div>
+        <div class="wi-txt"><div class="wi-name">Box Plot</div><div class="wi-desc">Spread & outliers</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('heatmap')" data-s="heat map correlation">
+        <div class="wi-ico" style="background:#F3E5F5">🔥</div>
+        <div class="wi-txt"><div class="wi-name">Heat Map</div><div class="wi-desc">Correlation matrix</div></div>
+        <div class="wi-add">+</div>
+      </div>
+    </div>
+
+    <!-- MODEL -->
+    <div class="cat-hd" onclick="toggleCat('model')">
+      <div class="cat-pip" style="background:#E74C3C;"></div>
+      <div class="cat-nm">Model</div>
+      <div class="cat-chev open" id="chev-model">›</div>
+    </div>
+    <div id="cat-model">
+      <div class="wi" onclick="addNodeAndClose('logistic')" data-s="logistic regression classify">
+        <div class="wi-ico" style="background:#FFEBEE">📐</div>
+        <div class="wi-txt"><div class="wi-name">Logistic Regression</div><div class="wi-desc">Classification</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('knn')" data-s="knn nearest neighbors classify">
+        <div class="wi-ico" style="background:#FFEBEE">🔵</div>
+        <div class="wi-txt"><div class="wi-name">kNN</div><div class="wi-desc">k-Nearest Neighbors</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('naivebayes')" data-s="naive bayes classify probability">
+        <div class="wi-ico" style="background:#FFEBEE">🎲</div>
+        <div class="wi-txt"><div class="wi-name">Naïve Bayes</div><div class="wi-desc">Probabilistic model</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('linreg')" data-s="linear regression predict number">
+        <div class="wi-ico" style="background:#FFEBEE">📉</div>
+        <div class="wi-txt"><div class="wi-name">Linear Regression</div><div class="wi-desc">Predict numbers</div></div>
+        <div class="wi-add">+</div>
+      </div>
+    </div>
+
+    <!-- EVALUATE -->
+    <div class="cat-hd" onclick="toggleCat('eval')">
+      <div class="cat-pip" style="background:#27AE60;"></div>
+      <div class="cat-nm">Evaluate</div>
+      <div class="cat-chev open" id="chev-eval">›</div>
+    </div>
+    <div id="cat-eval">
+      <div class="wi" onclick="addNodeAndClose('testandscore')" data-s="test score evaluate accuracy">
+        <div class="wi-ico" style="background:#E8F5E9">🏆</div>
+        <div class="wi-txt"><div class="wi-name">Test & Score</div><div class="wi-desc">Accuracy & metrics</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('confmatrix')" data-s="confusion matrix evaluate">
+        <div class="wi-ico" style="background:#E8F5E9">🟧</div>
+        <div class="wi-txt"><div class="wi-name">Confusion Matrix</div><div class="wi-desc">Prediction breakdown</div></div>
+        <div class="wi-add">+</div>
+      </div>
+      <div class="wi" onclick="addNodeAndClose('predictions')" data-s="predictions output results">
+        <div class="wi-ico" style="background:#E8F5E9">📋</div>
+        <div class="wi-txt"><div class="wi-name">Predictions</div><div class="wi-desc">Row-by-row results</div></div>
+        <div class="wi-add">+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CANVAS -->
+<div class="canvas-area" id="canvasArea">
+  <svg id="csvg"></svg>
+  <div class="canvas-inner" id="canvasInner">
+    <div class="hint" id="hint">
+      <div class="hint-big">🍊</div>
+      <div class="hint-txt">
+        Tap ☰ menu → choose a widget → it appears here<br>
+        Tap any widget to upload, connect, or configure<br>
+        Connect widgets to build your ML pipeline
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="sb-i">Nodes: <b id="sb-n">0</b></div>
+  <div class="sb-i">Links: <b id="sb-l">0</b></div>
+  <div class="sb-i" id="sb-d">No data</div>
+</div>
+
+<!-- ACTION SHEET -->
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheetOnOverlay(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hd" id="sheet-hd">
+      <div class="sheet-hd-ico" id="sheet-ico"></div>
+      <div>
+        <div class="sheet-hd-title" id="sheet-title">Widget</div>
+        <div class="sheet-hd-sub" id="sheet-sub"></div>
+      </div>
+      <button class="sheet-close" onclick="closeSheet()">✕</button>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+let nodes={}, conns=[], nid=0;
+let rawData=[], headers=[], trainRows=[], testRows=[];
+let trainedModels={}, vizCharts={};
+let activeNid=null;
+
+const canvasArea=document.getElementById('canvasArea');
+const canvasInner=document.getElementById('canvasInner');
+const svg=document.getElementById('csvg');
+
+/* ══════════════════════════════════════════
+   WIDGET DEFINITIONS
+══════════════════════════════════════════ */
+const WD={
+  file:       {name:'File',              icon:'📁', bg:'#FFF3E0', cat:'data'},
+  datatable:  {name:'Data Table',        icon:'📋', bg:'#E8F5E9', cat:'data'},
+  sampler:    {name:'Data Sampler',      icon:'✂️', bg:'#E3F2FD', cat:'data'},
+  featurestat:{name:'Feature Statistics',icon:'📊', bg:'#FFF8E1', cat:'data'},
+  scatter:    {name:'Scatter Plot',      icon:'🔴', bg:'#F3E5F5', cat:'viz'},
+  distributions:{name:'Distributions',  icon:'📈', bg:'#F3E5F5', cat:'viz'},
+  boxplot:    {name:'Box Plot',          icon:'📦', bg:'#F3E5F5', cat:'viz'},
+  heatmap:    {name:'Heat Map',          icon:'🔥', bg:'#F3E5F5', cat:'viz'},
+  logistic:   {name:'Logistic Reg',      icon:'📐', bg:'#FFEBEE', cat:'model'},
+  knn:        {name:'kNN',               icon:'🔵', bg:'#FFEBEE', cat:'model'},
+  naivebayes: {name:'Naïve Bayes',       icon:'🎲', bg:'#FFEBEE', cat:'model'},
+  linreg:     {name:'Linear Reg',        icon:'📉', bg:'#FFEBEE', cat:'model'},
+  testandscore:{name:'Test & Score',     icon:'🏆', bg:'#E8F5E9', cat:'eval'},
+  confmatrix: {name:'Confusion Matrix',  icon:'🟧', bg:'#E8F5E9', cat:'eval'},
+  predictions:{name:'Predictions',       icon:'📋', bg:'#E8F5E9', cat:'eval'},
+};
+
+/* ══════════════════════════════════════════
+   DRAWER
+══════════════════════════════════════════ */
+function toggleDrawer(){
+  const ov=document.getElementById('drawerOverlay');
+  const btn=document.getElementById('hamBtn');
+  const open=ov.classList.toggle('open');
+  btn.classList.toggle('open',open);
+}
+function closeDrawer(){
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('hamBtn').classList.remove('open');
+}
+function closeDrawerOnOverlay(e){
+  if(e.target===document.getElementById('drawerOverlay')) closeDrawer();
+}
+function toggleCat(id){
+  const el=document.getElementById('cat-'+id);
+  const ch=document.getElementById('chev-'+id);
+  const open=ch.classList.contains('open');
+  el.style.display=open?'none':'block';
+  ch.classList.toggle('open',!open);
+}
+function filterWi(q){
+  document.querySelectorAll('.wi').forEach(el=>{
+    el.style.display=!q||el.dataset.s.includes(q.toLowerCase())?'':'none';
+  });
+}
+function addNodeAndClose(type){
+  addNode(type);
+  closeDrawer();
+}
+
+/* ══════════════════════════════════════════
+   ADD NODE
+══════════════════════════════════════════ */
+function addNode(type){
+  nid++;const id=nid;
+  const d=WD[type];
+  const count=Object.keys(nodes).length;
+  const area=canvasArea;
+  const x=area.scrollLeft+24+((count)%4)*160;
+  const y=area.scrollTop+30+Math.floor(count/4)*170;
+  const el=document.createElement('div');
+  el.className='node';el.id='nd-'+id;
+  el.style.left=x+'px';el.style.top=y+'px';
+  el.innerHTML=`
+    <div class="node-ring" style="background:${d.bg};" id="nr-${id}">
+      <div class="node-icon">${d.icon}</div>
+      <div class="node-dot" id="ndot-${id}"></div>
+    </div>
+    <button class="node-del" onclick="deleteNode(${id},event)">✕</button>
+    <div class="node-lbl">${d.name}</div>
+    <div class="node-sub" id="nsub-${id}">idle</div>`;
+  el.addEventListener('click',e=>{
+    if(e.target.classList.contains('node-del'))return;
+    openSheet(id);
+  });
+  canvasInner.appendChild(el);
+  nodes[id]={type,x,y,el,status:'idle',data:null};
+  makeDraggable(el,id);
+  document.getElementById('hint').style.display='none';
+  updateSB();
+  return id;
+}
+
+/* ══════════════════════════════════════════
+   DRAG
+══════════════════════════════════════════ */
+function makeDraggable(el,id){
+  let sx,sy,ox,oy,dragging=false,moved=false;
+  function start(e){
+    if(e.target.classList.contains('node-del'))return;
+    const t=e.touches?e.touches[0]:e;
+    sx=t.clientX;sy=t.clientY;
+    ox=nodes[id].x;oy=nodes[id].y;
+    dragging=true;moved=false;el.style.zIndex=100;
+    if(e.cancelable)e.preventDefault();
+  }
+  function move(e){
+    if(!dragging)return;
+    const t=e.touches?e.touches[0]:e;
+    const dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Math.abs(dx)+Math.abs(dy)>5)moved=true;
+    const nx=Math.max(0,ox+dx),ny=Math.max(0,oy+dy);
+    el.style.left=nx+'px';el.style.top=ny+'px';
+    nodes[id].x=nx;nodes[id].y=ny;
+    drawConns();
+    if(e.cancelable)e.preventDefault();
+  }
+  function end(e){
+
+  if(!dragging) return;
+
+  dragging=false;
+  el.style.zIndex=10;
+
+  // Open widget when user taps instead of drags
+  if(!moved){
+    openSheet(id);
+  }
+}
+  el.addEventListener('touchstart',start,{passive:false});
+  document.addEventListener('touchmove',move,{passive:false});
+  document.addEventListener('touchend',end);
+  el.addEventListener('mousedown',start);
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',end);
+}
+
+/* ══════════════════════════════════════════
+   ACTION SHEET — tap node → open sheet
+══════════════════════════════════════════ */
+function openSheet(id){
+  activeNid=id;
+  const n=nodes[id];const d=WD[n.type];
+  document.getElementById('sheet-ico').textContent=d.icon;
+  document.getElementById('sheet-ico').style.background=d.bg;
+  document.getElementById('sheet-title').textContent=d.name;
+  document.getElementById('sheet-sub').textContent='#'+id+' · '+d.cat;
+  buildSheet(n.type,id);
+  document.getElementById('sheetOverlay').classList.add('open');
+}
+function closeSheet(){
+  document.getElementById('sheetOverlay').classList.remove('open');
+  activeNid=null;
+}
+function closeSheetOnOverlay(e){
+  if(e.target===document.getElementById('sheetOverlay'))closeSheet();
+}
+
+/* ══════════════════════════════════════════
+   BUILD SHEET CONTENT
+══════════════════════════════════════════ */
+function buildSheet(type,id){
+  const b=document.getElementById('sheet-body');
+  b.innerHTML='';
+
+  // ── Connections section (always shown at top for non-file) ──
+  if(type!=='file'){
+    b.innerHTML+=connectSection(id);
+  }
+
+  // ── Type-specific content ──
+  if(type==='file'){
+    b.innerHTML=`
+      <div class="info-pill">Import your CSV or Excel file. All other widgets will use this data.</div>
+      <label class="upload-zone" for="fi-${id}">
+        <input type="file" id="fi-${id}" accept=".csv,.xlsx,.xls" onchange="loadFile(event,${id})"/>
+        <div class="uz-icon">${rawData.length?'✅':'📂'}</div>
+        <div class="uz-title">${rawData.length?'File loaded — tap to reload':'Tap here to import'}</div>
+        <div class="uz-sub">${rawData.length?rawData.length-1+' rows · '+headers.length+' columns':'CSV · XLS · XLSX supported'}</div>
+        <div class="uz-btn">${rawData.length?'Change File':'Browse Files'}</div>
+      </label>
+      ${rawData.length?miniTableHTML():''}`;
+  }
+
+  else if(type==='datatable'){
+    b.innerHTML+=rawData.length
+      ?`<div style="margin-top:8px;">${miniTableHTML()}</div>`
+      :`<div class="info-pill">Connect a File widget first, then tap here again.</div>`;
+    if(rawData.length) setNStatus(id,'ok',rawData.length-1+' rows');
+  }
+
+  else if(type==='sampler'){
+    const total=rawData.length>1?rawData.length-1:0;
+    const pct=nodes[id].splitPct||70;
+    b.innerHTML+=`
+      <div class="sf" style="margin-top:8px;">
+        <label class="sl">Training split: <b id="spct-${id}" style="color:var(--or)">${pct}%</b></label>
+        <input type="range" min="50" max="90" step="5" value="${pct}" oninput="onSlide(${id},this.value)"/>
+      </div>
+      <div class="split-vis">
+        <div class="split-tr" id="str-${id}" style="width:${pct}%">Train ${pct}%</div>
+        <div class="split-te" id="ste-${id}" style="width:${100-pct}%">Test ${100-pct}%</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mt);margin-bottom:12px;">
+        <span id="stc-${id}">${total?Math.floor(total*pct/100)+' rows':'—'}</span>
+        <span id="svc-${id}">${total?Math.ceil(total*(100-pct)/100)+' rows':'—'}</span>
+      </div>
+      <button class="sbtn" onclick="doSplit(${id})">✂️ Split Data Now</button>
+      <div id="split-res-${id}"></div>`;
+  }
+
+  else if(type==='featurestat'){
+    b.innerHTML+=`<button class="sbtn ghost" onclick="doFeatStat(${id})" style="margin-top:8px;">📊 Compute Statistics</button><div id="fs-res-${id}"></div>`;
+    if(rawData.length) setTimeout(()=>doFeatStat(id),50);
+  }
+
+  else if(type==='scatter'){
+    const nc=numOpts();
+    b.innerHTML+=`
+      <div class="sf" style="margin-top:8px;">
+        <label class="sl">X Axis (numeric)</label>
+        <select class="ss" id="scx-${id}" onchange="doScatter(${id})">${nc}</select>
+      </div>
+      <div class="sf">
+        <label class="sl">Y Axis (numeric)</label>
+        <select class="ss" id="scy-${id}" onchange="doScatter(${id})">${nc}</select>
+      </div>
+      <div class="pchart"><canvas id="sch-${id}"></canvas></div>`;
+    setTimeout(()=>doScatter(id),80);
+  }
+
+  else if(type==='distributions'){
+    b.innerHTML+=`
+      <div class="sf" style="margin-top:8px;">
+        <label class="sl">Column</label>
+        <select class="ss" id="dc-${id}" onchange="doDist(${id})">${numOpts()}</select>
+      </div>
+      <div class="pchart"><canvas id="dch-${id}"></canvas></div>`;
+    setTimeout(()=>doDist(id),80);
+  }
+
+  else if(type==='boxplot'){
+    b.innerHTML+=`
+      <div class="sf" style="margin-top:8px;">
+        <label class="sl">Column</label>
+        <select class="ss" id="bc-${id}" onchange="doBox(${id})">${numOpts()}</select>
+      </div>
+      <div id="box-res-${id}"></div>`;
+    setTimeout(()=>doBox(id),80);
+  }
+
+  else if(type==='heatmap'){
+    b.innerHTML+=`<button class="sbtn ghost" onclick="doHeatmap(${id})" style="margin-top:8px;">🔥 Draw Correlation Heatmap</button><div id="hm-res-${id}"></div>`;
+    if(rawData.length) setTimeout(()=>doHeatmap(id),50);
+  }
+
+  else if(['logistic','knn','naivebayes','linreg'].includes(type)){
+    buildModelSheet(type,id,b);
+  }
+
+  else if(type==='testandscore'){
+    b.innerHTML+=`<button class="sbtn green" onclick="doTestScore(${id})" style="margin-top:8px;">▶ Test & Score</button><div id="tas-${id}"></div>`;
+  }
+
+  else if(type==='confmatrix'){
+    b.innerHTML+=`<button class="sbtn" onclick="doConfMatrix(${id})" style="margin-top:8px;">🟧 Draw Confusion Matrix</button><div id="cm-${id}"></div>`;
+  }
+
+  else if(type==='predictions'){
+    b.innerHTML+=`<button class="sbtn ghost" onclick="doShowPreds(${id})" style="margin-top:8px;">📋 Show Predictions</button><div id="pr-${id}"></div>`;
+    if(Object.keys(trainedModels).length) setTimeout(()=>doShowPreds(id),50);
+  }
+
+  // Delete button at bottom
+  b.innerHTML+=`<button class="action-btn danger" onclick="deleteNode(${id});closeSheet();" style="margin-top:14px;width:100%;">
+    <span class="action-btn-ico">🗑</span>
+    <div class="action-btn-txt"><div class="action-btn-name">Remove Widget</div><div class="action-btn-desc">Delete from canvas</div></div>
+  </button>`;
+}
+
+/* ── CONNECT SECTION ── */
+function connectSection(id){
+  const allNodes=Object.entries(nodes).filter(([nid2])=>parseInt(nid2)!==id);
+  if(!allNodes.length) return `<div class="info-pill" style="margin-bottom:12px;">Add more widgets to connect them together.</div>`;
+
+  let html=`<div class="connect-section">
+    <span class="connect-label">🔗 Connect to widget</span>
+    <div class="info-pill">Tap a widget below to connect your data output to it.</div>
+    <div class="connect-node-list">`;
+
+  allNodes.forEach(([nid2,n])=>{
+    const d=WD[n.type];
+    const already=conns.find(c=>c.from===id&&c.to===parseInt(nid2));
+    html+=`<button class="connect-node-btn ${already?'connected':''}" onclick="toggleConn(${id},${nid2})">
+      <span class="cn-ico">${d.icon}</span>
+      <div>
+        <div class="cn-name">${d.name} #${nid2}</div>
+        <div class="cn-status">${n.status==='ok'?'Ready':'Idle'}</div>
+      </div>
+      <span class="cn-badge">${already?'✓ Connected':'+ Connect'}</span>
+    </button>`;
+  });
+  html+=`</div></div><hr style="border:none;border-top:1px solid var(--bdr);margin-bottom:14px;">`;
+  return html;
+}
+
+function toggleConn(fromId,toId){
+  const existing=conns.findIndex(c=>c.from===fromId&&c.to===toId);
+  if(existing>=0){
+    conns.splice(existing,1);
+    toast('Connection removed');
+  } else {
+    conns.push({from:fromId,to:toId});
+    if(nodes[fromId].data) propagate(fromId);
+    toast('✓ Connected #'+fromId+' → #'+toId);
+  }
+  drawConns();
+  updateSB();
+  // Refresh sheet
+  buildSheet(nodes[fromId].type,fromId);
+}
+
+/* ══════════════════════════════════════════
+   SVG CONNECTIONS
+══════════════════════════════════════════ */
+function drawConns(){
+  while(svg.firstChild)svg.removeChild(svg.firstChild);
+  conns.forEach(c=>{
+    const fn=nodes[c.from],tn=nodes[c.to];if(!fn||!tn)return;
+    const x1=fn.x+78,y1=fn.y+34;
+    const x2=tn.x+10,y2=tn.y+34;
+    const cx1=x1+(x2-x1)*.5,cx2=x2-(x2-x1)*.5;
+    const live=fn.data&&tn.data;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${x1},${y1} C${cx1},${y1} ${cx2},${y2} ${x2},${y2}`);
+    path.setAttribute('class','cpath'+(live?' live':''));
+    svg.appendChild(path);
+    // Arrowhead
+    const ang=Math.atan2(y2-y1,x2-x1);
+    const ax=x2-10*Math.cos(ang),ay=y2-10*Math.sin(ang);
+    const ar=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    ar.setAttribute('points',`${x2},${y2} ${ax+5*Math.sin(ang)},${ay-5*Math.cos(ang)} ${ax-5*Math.sin(ang)},${ay+5*Math.cos(ang)}`);
+    ar.setAttribute('class','carr'+(live?' live':''));
+    svg.appendChild(ar);
+  });
+}
+
+/* ══════════════════════════════════════════
+   DATA PROPAGATION
+══════════════════════════════════════════ */
+function propagate(fromId){
+  const data=nodes[fromId].data;if(!data)return;
+  conns.filter(c=>c.from===fromId).forEach(c=>{
+    nodes[c.to].inData=data;
+    setNStatus(c.to,'ok','ready');
+    propagate(c.to);
+  });
+  drawConns();
+}
+
+/* ══════════════════════════════════════════
+   FILE LOAD
+══════════════════════════════════════════ */
+function loadFile(evt,id){
+  const f=evt.target.files[0];if(!f)return;
+  const ext=f.name.split('.').pop().toLowerCase();
+  if(ext==='csv'){
+    const r=new FileReader();
+    r.onload=e=>{
+      const rows=e.target.result.trim().split('\n').map(l=>l.split(',').map(c=>c.trim().replace(/^"|"$/g,'')));
+      if(rows.length<2){toast('⚠ File too small');return;}
+      applyData(rows,f.name,id);
+    };
+    r.readAsText(f);
+  }else{
+    if(typeof XLSX==='undefined'){toast('⏳ Loading Excel engine…');setTimeout(()=>loadFile(evt,id),700);return;}
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+        const clean=rows.filter(r=>r.some(c=>c!=='')).map(r=>r.map(c=>String(c==null?'':c).trim()));
+        if(clean.length<2){toast('⚠ Empty file');return;}
+        applyData(clean,f.name,id);
+      }catch(e){toast('⚠ '+e.message);}
+    };
+    r.readAsArrayBuffer(f);
+  }
+}
+
+function applyData(rows,fname,id){
+  rawData=rows;headers=rows[0];
+  nodes[id].data={rows,headers};
+  setNStatus(id,'ok',rows.length-1+' rows');
+  document.getElementById('sb-d').textContent=fname+' · '+(rows.length-1)+' rows';
+  propagate(id);
+  toast('✅ '+fname+' — '+( rows.length-1)+' rows');
+  // Refresh sheet if still open
+  if(activeNid===id) buildSheet('file',id);
+}
+
+/* ══════════════════════════════════════════
+   SAMPLER
+══════════════════════════════════════════ */
+function onSlide(id,v){
+  v=parseInt(v);nodes[id].splitPct=v;
+  document.getElementById('spct-'+id).textContent=v+'%';
+  document.getElementById('str-'+id).style.width=v+'%';document.getElementById('str-'+id).textContent='Train '+v+'%';
+  document.getElementById('ste-'+id).style.width=(100-v)+'%';document.getElementById('ste-'+id).textContent='Test '+(100-v)+'%';
+  const tot=rawData.length-1;
+  if(tot){document.getElementById('stc-'+id).textContent=Math.floor(tot*v/100)+' rows';document.getElementById('svc-'+id).textContent=Math.ceil(tot*(100-v)/100)+' rows';}
+}
+function doSplit(id){
+  if(!rawData.length){toast('⚠ Connect and load data first');return;}
+  const pct=nodes[id].splitPct||70;
+  const rows=[...rawData.slice(1)].sort(()=>Math.random()-.5);
+  const cut=Math.floor(rows.length*pct/100);
+  trainRows=rows.slice(0,cut);testRows=rows.slice(cut);
+  nodes[id].data={train:trainRows,test:testRows,headers};
+  setNStatus(id,'ok','Train:'+trainRows.length+' Test:'+testRows.length);
+  const r=document.getElementById('split-res-'+id);
+  if(r)r.innerHTML=`<div style="margin-top:10px;padding:10px;background:var(--okl);border:1px solid var(--ok);border-radius:8px;font-size:12px;color:#155724;font-weight:600;">✓ ${trainRows.length} training · ${testRows.length} test rows</div>`;
+  propagate(id);toast('✓ Data split done');
+}
+
+/* ══════════════════════════════════════════
+   FEATURE STATISTICS
+══════════════════════════════════════════ */
+function doFeatStat(id){
+  if(!rawData.length){toast('⚠ Load data first');return;}
+  const r=document.getElementById('fs-res-'+id);if(!r)return;
+  let html='<div style="margin-top:10px;">';
+  headers.forEach((h,i)=>{
+    const vals=rawData.slice(1).map(r=>r[i]);
+    const nums=vals.map(v=>parseFloat(v)).filter(n=>isFinite(n));
+    const miss=vals.filter(v=>v===''||v==='null'||v==='NA').length;
+    const uniq=[...new Set(vals)].length;
+    const isN=nums.length/Math.max(vals.length,1)>0.6;
+    const pct=miss?` · <span style="color:var(--err)">${miss} missing</span>`:'';
+    html+=`<div style="padding:9px 0;border-bottom:1px solid var(--bdr);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:var(--tx);">${h}</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:5px;background:${isN?'var(--bll)':'var(--pul)'};color:${isN?'var(--bl)':'var(--pu)'};font-weight:700;">${isN?'numeric':'text'}</span>
+      </div>
+      <div style="font-size:10px;color:var(--mt);margin-top:3px;">
+        ${isN?`min ${Math.min(...nums).toFixed(1)} · max ${Math.max(...nums).toFixed(1)} · mean ${(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1)}`:`${uniq} unique values`}${pct}
+      </div>
+    </div>`;
+  });
+  r.innerHTML=html+'</div>';
+  setNStatus(id,'ok','Computed');
+}
+
+/* ══════════════════════════════════════════
+   VISUALIZE
+══════════════════════════════════════════ */
+function numOpts(){return headers.map((h,i)=>isNC(i)?`<option value="${i}">${h}</option>`:'').join('');}
+function allOpts(){return headers.map((h,i)=>`<option value="${i}">${h}</option>`).join('');}
+function isNC(i){const s=rawData.slice(1,15);return s.filter(r=>!isNaN(parseFloat(r[i]))).length/Math.max(s.length,1)>=0.6;}
+
+function doScatter(id){
+  if(!rawData.length)return;
+  const xi=parseInt(document.getElementById('scx-'+id)?.value);
+  const yi=parseInt(document.getElementById('scy-'+id)?.value);
+  if(isNaN(xi)||isNaN(yi))return;
+  const pts=rawData.slice(1).map(r=>({x:parseFloat(r[xi]),y:parseFloat(r[yi])})).filter(p=>isFinite(p.x)&&isFinite(p.y));
+  const ctx=document.getElementById('sch-'+id);if(!ctx)return;
+  if(vizCharts['sc'+id])vizCharts['sc'+id].destroy();
+  vizCharts['sc'+id]=new Chart(ctx,{type:'scatter',data:{datasets:[{label:headers[xi]+' vs '+headers[yi],data:pts,backgroundColor:'rgba(255,102,0,.6)',pointRadius:3.5,pointHoverRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:8}}},scales:{x:{ticks:{color:'#999',font:{size:9}},grid:{color:'#eee'}},y:{ticks:{color:'#999',font:{size:9}},grid:{color:'#eee'}}}}});
+  setNStatus(id,'ok',pts.length+' pts');
+}
+
+function doDist(id){
+  if(!rawData.length)return;
+  const ci=parseInt(document.getElementById('dc-'+id)?.value);if(isNaN(ci))return;
+  const nums=rawData.slice(1).map(r=>parseFloat(r[ci])).filter(n=>isFinite(n));
+  if(!nums.length)return;
+  const mn=Math.min(...nums),mx=Math.max(...nums),bins=12,bw=(mx-mn)/bins;
+  const cnt=Array(bins).fill(0),lb=[];
+  for(let i=0;i<bins;i++)lb.push((mn+i*bw).toFixed(1));
+  nums.forEach(n=>{let b=Math.min(~~((n-mn)/bw),bins-1);cnt[b]++;});
+  const ctx=document.getElementById('dch-'+id);if(!ctx)return;
+  if(vizCharts['d'+id])vizCharts['d'+id].destroy();
+  vizCharts['d'+id]=new Chart(ctx,{type:'bar',data:{labels:lb,datasets:[{data:cnt,backgroundColor:'rgba(255,102,0,.75)',borderColor:'#FF6600',borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#999',font:{size:9}},grid:{color:'#eee'}},y:{ticks:{color:'#999',font:{size:9}},grid:{color:'#eee'}}}}});
+  setNStatus(id,'ok',nums.length+' vals');
+}
+
+function doBox(id){
+  if(!rawData.length)return;
+  const ci=parseInt(document.getElementById('bc-'+id)?.value);if(isNaN(ci))return;
+  const nums=rawData.slice(1).map(r=>parseFloat(r[ci])).filter(n=>isFinite(n)).sort((a,b)=>a-b);
+  if(!nums.length)return;
+  const q=p=>{const i=(p/100)*(nums.length-1);const lo=~~i;return nums[lo]+(nums[lo+1]?nums[lo+1]-nums[lo]:0)*(i-lo);};
+  const mn=nums[0],mx=nums[nums.length-1],q1=q(25),med=q(50),q3=q(75),rng=mx-mn||1;
+  const pc=v=>((v-mn)/rng*100).toFixed(1)+'%';
+  const r=document.getElementById('box-res-'+id);if(!r)return;
+  r.innerHTML=`<div style="padding:12px;background:var(--cardf);border:1px solid var(--bdr);border-radius:10px;margin-top:8px;">
+    <div style="font-size:11px;font-weight:700;color:var(--mt);margin-bottom:8px;">${headers[ci]}</div>
+    <div style="height:28px;position:relative;margin:8px 0;">
+      <div style="position:absolute;top:50%;left:0;right:0;height:2px;background:#ddd;transform:translateY(-50%);"></div>
+      <div style="position:absolute;top:20%;height:60%;background:rgba(255,102,0,.2);border:2px solid var(--or);left:${pc(q1)};width:${((q3-q1)/rng*100).toFixed(1)}%"></div>
+      <div style="position:absolute;top:10%;height:80%;width:3px;background:var(--or);left:${pc(med)}"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--mt);font-weight:700;">
+      <span>Min<br>${mn.toFixed(1)}</span><span>Q1<br>${q1.toFixed(1)}</span><span>Med<br>${med.toFixed(1)}</span><span>Q3<br>${q3.toFixed(1)}</span><span>Max<br>${mx.toFixed(1)}</span>
+    </div>
+  </div>
+  <div class="metrics" style="margin-top:8px;">
+    <div class="metric"><div class="mv">${(q3-q1).toFixed(2)}</div><div class="ml">IQR</div></div>
+    <div class="metric"><div class="mv">${nums.length}</div><div class="ml">Count</div></div>
+  </div>`;
+  setNStatus(id,'ok','Done');
+}
+
+function doHeatmap(id){
+  if(!rawData.length){toast('⚠ Load data first');return;}
+  const nC=headers.map((h,i)=>({h,i})).filter(({i})=>isNC(i)).slice(0,8);
+  if(nC.length<2){toast('⚠ Need 2+ numeric columns');return;}
+  const gC=i=>rawData.slice(1).map(r=>parseFloat(r[i])).filter(n=>isFinite(n));
+  const corr=(a,b)=>{const n=Math.min(a.length,b.length);const am=a.reduce((s,v)=>s+v,0)/n,bm=b.reduce((s,v)=>s+v,0)/n;let nu=0,da=0,db=0;for(let k=0;k<n;k++){nu+=(a[k]-am)*(b[k]-bm);da+=(a[k]-am)**2;db+=(b[k]-bm)**2;}return da&&db?nu/Math.sqrt(da*db):0;};
+  const r=document.getElementById('hm-res-'+id);if(!r)return;
+  let html='<div class="ptbl" style="margin-top:8px;"><table><tr><th></th>'+nC.map(c=>`<th>${c.h.slice(0,5)}</th>`).join('')+'</tr>';
+  nC.forEach((ri,i)=>{
+    html+=`<tr><th>${ri.h.slice(0,5)}</th>`;
+    nC.forEach((ci2,j)=>{
+      const rv=i===j?1:corr(gC(ri.i),gC(ci2.i));
+      const ab=Math.abs(rv);
+      const bg=rv>0?`rgba(255,102,0,${ab*.7})`:`rgba(37,99,235,${ab*.7})`;
+      html+=`<td style="background:${bg};text-align:center;font-size:9px;font-weight:700;color:${ab>.5?'#fff':'#333'}">${rv.toFixed(2)}</td>`;
+    });
+    html+='</tr>';
+  });
+  r.innerHTML=html+'</table></div><div style="font-size:10px;color:var(--mt);margin-top:4px;">🟠 positive  🔵 negative</div>';
+  setNStatus(id,'ok','Done');
+}
+
+/* ══════════════════════════════════════════
+   MODEL SHEET
+══════════════════════════════════════════ */
+function buildModelSheet(type,id,b){
+  const cols=headers.map((h,i)=>`<option value="${i}">${h}</option>`).join('');
+  const descs={
+    logistic:'Finds a line that separates categories. Great for Yes/No predictions.',
+    knn:'Looks at nearest similar rows to classify. Simple and interpretable.',
+    naivebayes:'Uses probability of each feature per class. Fast and effective.',
+    linreg:'Draws a best-fit line to predict numeric values.',
+  };
+  b.innerHTML+=`
+    <div class="info-pill">${descs[type]}</div>
+    <div class="sf">
+      <label class="sl">Target Column (what to predict)</label>
+      <select class="ss" id="mt-${id}">${cols}</select>
+    </div>
+    <div class="sf">
+      <label class="sl">Train / Test Split</label>
+      <select class="ss" id="ms-${id}">
+        <option value="70">70% Train · 30% Test</option>
+        <option value="80">80% Train · 20% Test</option>
+        <option value="60">60% Train · 40% Test</option>
+      </select>
+    </div>
+    ${type==='knn'?`<div class="sf"><label class="sl">K Neighbors</label><input type="number" class="si" id="mk-${id}" value="5" min="1" max="20"/></div>`:''}
+    ${type==='logistic'?`<div class="sf"><label class="sl">Iterations</label><input type="number" class="si" id="mi-${id}" value="100" min="10" max="300"/></div>`:''}
+    <button class="sbtn green" onclick="trainModel('${type}',${id})">▶ Train Model</button>
+    <div id="mr-${id}" style="margin-top:10px;"></div>`;
+}
+
+/* ══════════════════════════════════════════
+   ML TRAINING
+══════════════════════════════════════════ */
+function trainModel(type,id){
+  if(!rawData.length){toast('⚠ Load a data file first');return;}
+  const tgtEl=document.getElementById('mt-'+id);if(!tgtEl)return;
+  const tgtIdx=parseInt(tgtEl.value);
+  const spPct=parseInt(document.getElementById('ms-'+id)?.value)||70;
+  const resEl=document.getElementById('mr-'+id);
+  const vals=rawData.slice(1).map(r=>r[tgtIdx]);
+  const nCount=vals.filter(v=>!isNaN(parseFloat(v))).length;
+  const task=nCount/vals.length>0.8&&[...new Set(vals)].length>10?'regression':'classification';
+  const allRows=[...rawData.slice(1)].sort(()=>Math.random()-.5);
+  const cut=Math.floor(allRows.length*spPct/100);
+  const trR=allRows.slice(0,cut),tsR=allRows.slice(cut);
+  const fCols=headers.map((_,i)=>i).filter(i=>i!==tgtIdx&&isNC(i));
+  if(!fCols.length){toast('⚠ No numeric feature columns');return;}
+  const getX=rows=>rows.map(r=>fCols.map(i=>parseFloat(r[i])||0));
+  const getY=rows=>rows.map(r=>r[tgtIdx]);
+  const Xtr=getX(trR),ytr=getY(trR),Xts=getX(tsR),yts=getY(tsR);
+  resEl.innerHTML='<div style="font-size:12px;color:var(--mt);margin-bottom:6px;">Training…</div><div class="pbar"><div class="pfill" id="pf-'+id+'" style="width:0%"></div></div>';
+  setNStatus(id,'busy','Training…');
+  animProg('pf-'+id,()=>{
+    let model=null;
+    try{
+      if(type==='logistic') model=fitLogistic(Xtr,ytr);
+      else if(type==='knn'){const k=parseInt(document.getElementById('mk-'+id)?.value)||5;model={type:'knn',X:Xtr,y:ytr,k};}
+      else if(type==='naivebayes') model=fitNB(Xtr,ytr);
+      else if(type==='linreg') model=fitLR(Xtr,ytr);
+    }catch(e){toast('⚠ Training failed');setNStatus(id,'err','Error');return;}
+    model.tgtIdx=tgtIdx;model.fCols=fCols;model.task=task;model.headers=headers;
+    trainedModels[id]=model;nodes[id].model=model;nodes[id].data={model,task};
+    const preds=predictAll(model,Xts);
+    showResults(resEl,preds,yts,task,trR.length,tsR.length);
+    setNStatus(id,'ok','Trained');
+    propagate(id);toast('✅ Model trained!');
+  });
+}
+
+function animProg(fillId,done){
+  const el=document.getElementById(fillId);if(!el){done();return;}
+  let w=0;
+  const iv=setInterval(()=>{
+    w+=Math.random()*18;
+    if(w>=95){clearInterval(iv);if(el)el.style.width='100%';setTimeout(done,250);}
+    else if(el)el.style.width=w+'%';
+  },60);
+}
+
+/* ══════════════════════════════════════════
+   EVALUATE
+══════════════════════════════════════════ */
+function getLatestModel(){return Object.values(trainedModels).slice(-1)[0]||null;}
+
+function doTestScore(id){
+  const m=getLatestModel();
+  if(!m){toast('⚠ Train a model first');return;}
+  const tsR=testRows.length?testRows:rawData.slice(1).slice(Math.floor(rawData.length*.7));
+  const Xts=tsR.map(r=>m.fCols.map(i=>parseFloat(r[i])||0));
+  const yts=tsR.map(r=>r[m.tgtIdx]);
+  const preds=predictAll(m,Xts);
+  const el=document.getElementById('tas-'+id);if(!el)return;
+  showResults(el,preds,yts,m.task,trainRows.length,tsR.length);
+  setNStatus(id,'ok','Done');
+}
+
+function doConfMatrix(id){
+  const m=getLatestModel();
+  if(!m){toast('⚠ Train a model first');return;}
+  if(m.task!=='classification'){toast('⚠ Classification only');return;}
+  const tsR=testRows.length?testRows:rawData.slice(1).slice(Math.floor(rawData.length*.7));
+  const Xts=tsR.map(r=>m.fCols.map(i=>parseFloat(r[i])||0));
+  const yts=tsR.map(r=>r[m.tgtIdx]);
+  const preds=predictAll(m,Xts);
+  const classes=[...new Set(yts.map(String))];
+  const el=document.getElementById('cm-'+id);if(!el)return;
+  el.innerHTML=buildCMHTML(preds,yts,classes);
+  setNStatus(id,'ok','Done');
+}
+
+function doShowPreds(id){
+  const m=getLatestModel();if(!m)return;
+  const rows=rawData.slice(1,11);
+  const Xs=rows.map(r=>m.fCols.map(i=>parseFloat(r[i])||0));
+  const preds=predictAll(m,Xs);
+  const el=document.getElementById('pr-'+id);if(!el)return;
+  let h=`<div class="ptbl" style="margin-top:8px;"><table><tr><th>Actual</th><th>Predicted</th><th>✓</th></tr>`;
+  rows.forEach((r,i)=>{
+    const ac=r[m.tgtIdx],pr=typeof preds[i]==='number'?preds[i].toFixed(2):preds[i];
+    const ok=String(ac)===String(preds[i]);
+    h+=`<tr><td>${ac}</td><td style="font-weight:700;color:${ok?'var(--ok)':'var(--err)'}">${pr}</td><td>${ok?'✓':'✗'}</td></tr>`;
+  });
+  h+='</table></div><div style="font-size:10px;color:var(--mt);margin-top:4px;">First 10 rows</div>';
+  el.innerHTML=h;setNStatus(id,'ok','Done');
+}
+
+/* ══════════════════════════════════════════
+   RESULTS
+══════════════════════════════════════════ */
+function showResults(el,preds,actual,task,trN,tsN){
+  if(task==='classification'){
+    const correct=preds.filter((p,i)=>String(p)===String(actual[i])).length;
+    const acc=correct/preds.length;
+    const classes=[...new Set([...actual.map(String),...preds.map(String)])];
+    let pr=0,rc=0;
+    classes.forEach(cls=>{
+      const tp=preds.filter((p,i)=>String(p)===cls&&String(actual[i])===cls).length;
+      const fp=preds.filter((p,i)=>String(p)===cls&&String(actual[i])!==cls).length;
+      const fn=preds.filter((p,i)=>String(p)!==cls&&String(actual[i])===cls).length;
+      pr+=tp/(tp+fp||1);rc+=tp/(tp+fn||1);
+    });
+    pr/=classes.length;rc/=classes.length;
+    const f1=2*pr*rc/(pr+rc||1);
+    el.innerHTML=`<div class="metrics">
+      <div class="metric wide ${acc>0.8?'good':''}"><div class="mv">${(acc*100).toFixed(1)}%</div><div class="ml">Accuracy · ${correct}/${preds.length} correct</div></div>
+      <div class="metric"><div class="mv">${(pr*100).toFixed(1)}%</div><div class="ml">Precision</div></div>
+      <div class="metric"><div class="mv">${(rc*100).toFixed(1)}%</div><div class="ml">Recall</div></div>
+      <div class="metric ${f1>0.8?'good':''}"><div class="mv">${f1.toFixed(3)}</div><div class="ml">F1 Score</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--mt);margin-top:6px;">Train: ${trN} rows · Test: ${tsN} rows · ${classes.length} classes</div>
+    <div style="font-size:11px;font-weight:700;color:var(--mt);margin:10px 0 6px;">Confusion Matrix</div>
+    ${buildCMHTML(preds,actual,classes)}`;
+  }else{
+    const yN=actual.map(v=>parseFloat(v));const pN=preds.map(v=>parseFloat(v));
+    const mae=pN.reduce((s,p,i)=>s+Math.abs(p-yN[i]),0)/pN.length;
+    const mse=pN.reduce((s,p,i)=>s+(p-yN[i])**2,0)/pN.length;
+    const ym=yN.reduce((a,b)=>a+b,0)/yN.length;
+    const r2=Math.max(0,1-pN.reduce((s,p,i)=>s+(yN[i]-p)**2,0)/yN.reduce((s,v)=>s+(v-ym)**2,0));
+    el.innerHTML=`<div class="metrics">
+      <div class="metric wide ${r2>0.7?'good':''}"><div class="mv">${(r2*100).toFixed(1)}%</div><div class="ml">R² — variance explained</div></div>
+      <div class="metric"><div class="mv">${Math.sqrt(mse).toFixed(2)}</div><div class="ml">RMSE</div></div>
+      <div class="metric"><div class="mv">${mae.toFixed(2)}</div><div class="ml">MAE</div></div>
+      <div class="metric"><div class="mv">${mse.toFixed(2)}</div><div class="ml">MSE</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--mt);margin-top:6px;">Train: ${trN} · Test: ${tsN} rows</div>`;
+  }
+}
+
+function buildCMHTML(preds,actual,classes){
+  const cl=classes.slice(0,6);
+  const mat=cl.map(r=>cl.map(c=>preds.filter((p,i)=>String(p)===c&&String(actual[i])===r).length));
+  const mx=Math.max(...mat.flat(),1);
+  let h='<div class="ptbl"><table><tr><th style="font-size:9px;">↓real\\pred→</th>'+cl.map(c=>`<th style="font-size:9px;">${c}</th>`).join('')+'</tr>';
+  mat.forEach((row,i)=>{
+    h+=`<tr><th style="font-size:9px;">${cl[i]}</th>${row.map((v,j)=>{
+      const bg=i===j?`rgba(22,163,74,${.12+v/mx*.55})`:`rgba(220,38,38,${v/mx*.38})`;
+      return `<td style="background:${bg};text-align:center;font-weight:${i===j?700:400};font-size:11px;">${v}</td>`;
+    }).join('')}</tr>`;
+  });
+  return h+'</table></div><div style="font-size:9px;color:var(--mt);margin-top:3px;">Diagonal = correct predictions</div>';
+}
+
+/* ══════════════════════════════════════════
+   ML ALGORITHMS
+══════════════════════════════════════════ */
+function fitLogistic(X,y){
+  const cls=[...new Set(y)],n=X.length,nf=X[0]?.length||1;
+  const mu=Array(nf).fill(0),sg=Array(nf).fill(1);
+  for(let j=0;j<nf;j++){mu[j]=X.reduce((s,r)=>s+r[j],0)/n;sg[j]=Math.sqrt(X.reduce((s,r)=>s+(r[j]-mu[j])**2,0)/n)||1;}
+  const Xn=X.map(r=>r.map((v,j)=>(v-mu[j])/sg[j]));
+  const cf={};
+  cls.forEach(c=>{
+    const yb=y.map(v=>v===c?1:0);let w=Array(nf).fill(0),b=0;
+    for(let it=0;it<100;it++){const g=Array(nf).fill(0);let gb=0;for(let i=0;i<n;i++){const z=Xn[i].reduce((s,v,j)=>s+v*w[j],0)+b;const s=1/(1+Math.exp(-Math.max(-500,Math.min(500,z))));const e=s-yb[i];Xn[i].forEach((v,j)=>g[j]+=e*v);gb+=e;}w=w.map((v,j)=>v-0.1*g[j]/n);b-=0.1*gb/n;}
+    cf[c]={w,b};
+  });
+  return{type:'logistic',cls,cf,mu,sg};
+}
+function fitNB(X,y){
+  const cls=[...new Set(y)],pr={},gs={},nf=X[0]?.length||1;
+  cls.forEach(c=>{const idx=y.map((v,i)=>v===c?i:-1).filter(i=>i>=0);pr[c]=idx.length/y.length;gs[c]=Array(nf).fill(0).map((_,j)=>{const vals=idx.map(i=>X[i][j]);const m=vals.reduce((a,b)=>a+b,0)/vals.length;const s=Math.sqrt(vals.reduce((a,b)=>a+(b-m)**2,0)/vals.length)||1;return{m,s};});});
+  return{type:'naive_bayes',cls,pr,gs};
+}
+function fitLR(X,y){
+  const yN=y.map(v=>parseFloat(v)||0),n=X.length,nf=X[0]?.length||1;
+  const mu=Array(nf).fill(0),sg=Array(nf).fill(1);
+  for(let j=0;j<nf;j++){mu[j]=X.reduce((s,r)=>s+r[j],0)/n;sg[j]=Math.sqrt(X.reduce((s,r)=>s+(r[j]-mu[j])**2,0)/n)||1;}
+  const Xn=X.map(r=>r.map((v,j)=>(v-mu[j])/sg[j]));
+  let w=Array(nf).fill(0),b=0;
+  for(let it=0;it<300;it++){const g=Array(nf).fill(0);let gb=0;for(let i=0;i<n;i++){const p=Xn[i].reduce((s,v,j)=>s+v*w[j],0)+b;const e=p-yN[i];Xn[i].forEach((v,j)=>g[j]+=e*v);gb+=e;}w=w.map((v,j)=>v-.001*g[j]/n);b-=.001*gb/n;}
+  return{type:'linreg',w,b,mu,sg};
+}
+function predictAll(m,Xts){
+  if(m.type==='logistic'){return Xts.map(x=>{const xn=x.map((v,j)=>(v-(m.mu[j]||0))/(m.sg[j]||1));let best=m.cls[0],bs=-Infinity;m.cls.forEach(c=>{const{w,b}=m.cf[c];const s=xn.reduce((a,v,j)=>a+v*w[j],0)+b;if(s>bs){bs=s;best=c;}});return best;});}
+  if(m.type==='knn'){return Xts.map(x=>{const ds=m.X.map((tr,i)=>({d:Math.sqrt(tr.reduce((s,v,j)=>s+(v-x[j])**2,0)),l:m.y[i]}));ds.sort((a,b)=>a.d-b.d);const v={};ds.slice(0,m.k).forEach(({l})=>v[l]=(v[l]||0)+1);return Object.entries(v).sort((a,b)=>b[1]-a[1])[0][0];});}
+  if(m.type==='naive_bayes'){return Xts.map(x=>{let best=m.cls[0],bl=-Infinity;m.cls.forEach(c=>{let lp=Math.log(m.pr[c]);x.forEach((v,j)=>{const{m:mn,s}=m.gs[c][j];lp-=Math.log(s)+((v-mn)**2)/(2*s*s);});if(lp>bl){bl=lp;best=c;}});return best;});}
+  if(m.type==='linreg'){return Xts.map(x=>{const xn=x.map((v,j)=>(v-(m.mu[j]||0))/(m.sg[j]||1));return xn.reduce((s,v,j)=>s+v*m.w[j],0)+m.b;});}
+  return[];
+}
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+function miniTableHTML(){
+  if(!rawData.length)return'';
+  let h=`<div class="ptbl" style="margin-top:12px;"><table><tr>${headers.map(c=>`<th>${c}</th>`).join('')}</tr>`;
+  rawData.slice(1,6).forEach(r=>{h+=`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`;});
+  return h+`</table></div><div style="font-size:10px;color:var(--mt);margin-top:5px;">Showing 5 of ${rawData.length-1} rows</div>`;
+}
+
+function setNStatus(id,st,txt){
+  const dot=document.getElementById('ndot-'+id);
+  const sub=document.getElementById('nsub-'+id);
+  const nd=document.getElementById('nd-'+id);
+  if(dot)dot.style.background=st==='ok'?'var(--ok)':st==='busy'?'var(--or2)':st==='err'?'var(--err)':'#ccc';
+  if(sub)sub.textContent=txt||'';
+  if(nd)nd.className='node'+(st==='ok'?' ready':st==='err'?' err':'');
+  if(nodes[id])nodes[id].status=st;
+}
+
+function deleteNode(id,e){
+  if(e)e.stopPropagation();
+  const el=document.getElementById('nd-'+id);
+  if(el){el.style.transition='all .2s';el.style.opacity='0';el.style.transform='scale(.85)';setTimeout(()=>el.remove(),200);}
+  delete nodes[id];delete trainedModels[id];
+  conns=conns.filter(c=>c.from!==id&&c.to!==id);
+  drawConns();updateSB();
+  if(!Object.keys(nodes).length)document.getElementById('hint').style.display='block';
+  toast('Widget removed');
+}
+
+function runAll(){
+  if(!rawData.length){toast('⚠ Add a File widget and import data first');return;}
+  toast('▶ Running workflow…');
+  setTimeout(()=>toast('✅ Done — tap model widgets to see results'),1200);
+}
+
+function clearAll(){
+  canvasInner.querySelectorAll('.node').forEach(e=>e.remove());
+  while(svg.firstChild)svg.removeChild(svg.firstChild);
+  nodes={};conns=[];nid=0;rawData=[];headers=[];trainRows=[];testRows=[];trainedModels={};
+  document.getElementById('hint').style.display='block';
+  document.getElementById('sb-d').textContent='No data';
+  updateSB();toast('Cleared');
+}
+
+function updateSB(){
+  document.getElementById('sb-n').textContent=Object.keys(nodes).length;
+  document.getElementById('sb-l').textContent=conns.length;
+}
+
+let toastT;
+function toast(m){
+  const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(reg => console.log('SW Registered'))
+      .catch(err => console.log('SW Error', err));
+  });
+}
+</script>
+</body>
+</html>
